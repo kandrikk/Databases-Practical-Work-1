@@ -1,82 +1,80 @@
-#include <pqxx/pqxx>
-#include <iostream>
-#include <string>
+#include "movie_storage.h"
+#include "movies.h"
 
-class MovieStorage {
-public:
-    MovieStorage(const std::string& db_name, const std::string& user, const std::string& password, const std::string& hostaddr, const std::string& port) {
-        std::string connection_str = "dbname=" + db_name + " user=" + user + " password=" + password + " hostaddr=" + hostaddr + " port=" + port;
-        conn = std::make_unique<pqxx::connection>(connection_str);
-    }
-
-    void addMovie(const std::string& name, const std::string& genre, const std::string& watch_date, int rating) {
-        pqxx::work txn(*conn);
-        txn.exec("INSERT INTO movies (name, genre, watch_date, rating) VALUES (" + txn.quote(name) + ", " + txn.quote(genre) + ", " + txn.quote(watch_date) + ", " + txn.quote(rating) + ")");
-        txn.commit();
-    }
-
-    void getMovie(int id) {
-        pqxx::work txn(*conn);
-        pqxx::result res = txn.exec("SELECT * FROM movies WHERE id = " + txn.quote(id));
-        if (res.empty()) {
-            std::cout << "Movie not found!" << std::endl;
-        } else {
-            for (const auto& row : res) {
-                std::cout << "ID: " << row[0] << ", Name: " << row[1] << ", Genre: " << row[2] << ", Date: " << row[3] << ", Rating: " << row[4] << std::endl;
-            }
-        }
-    }
-
-    void updateMovie(int id, const std::string& name, const std::string& genre, const std::string& watch_date, int rating) {
-        pqxx::work txn(*conn);
-        txn.exec("UPDATE movies SET name = " + txn.quote(name) + ", genre = " + txn.quote(genre) + ", watch_date = " + txn.quote(watch_date) + ", rating = " + txn.quote(rating) + " WHERE id = " + txn.quote(id));
-        txn.commit();
-    }
-
-    void deleteMovie(int id) {
-        pqxx::work txn(*conn);
-        txn.exec("DELETE FROM movies WHERE id = " + txn.quote(id));
-        txn.commit();
-    }
-
-private:
-    std::unique_ptr<pqxx::connection> conn;
-};
+void func(MovieStorage& storage, Movie film, char command);
+void menu();
 
 int main() {
-    MovieStorage storage("movie_db", "your_username", "your_password", "127.0.0.1", "5432");
-    std::string command;
-    
+    MovieStorage storage("movie_db", "kandik", "kandik", "127.0.0.1", "5432");
+    Movie film;
+    char command;
+
     while (true) {
-        std::cout << "Enter command (ADD, GET, UPDATE, DELETE, EXIT): ";
-        std::getline(std::cin, command);
-        
-        if (command == "ADD") {
-            std::string name, genre, date;
-            int rating;
-            std::cout << "Enter name, genre, date (YYYY-MM-DD), rating: ";
-            std::cin >> name >> genre >> date >> rating;
-            storage.addMovie(name, genre, date, rating);
-        } else if (command == "GET") {
-            int id;
-            std::cout << "Enter ID: ";
-            std::cin >> id;
-            storage.getMovie(id);
-        } else if (command == "UPDATE") {
-            int id, rating;
-            std::string name, genre, date;
-            std::cout << "Enter ID, name, genre, date (YYYY-MM-DD), rating: ";
-            std::cin >> id >> name >> genre >> date >> rating;
-            storage.updateMovie(id, name, genre, date, rating);
-        } else if (command == "DELETE") {
-            int id;
-            std::cout << "Enter ID: ";
-            std::cin >> id;
-            storage.deleteMovie(id);
-        } else if (command == "EXIT") {
+        menu();
+        command = getchar();
+
+        if (command == '7') {
             break;
         }
+        
+        func(storage, film, command);
+
         std::cin.ignore(); // Очистка буфера
     }
+
     return 0;
+}
+
+void func(MovieStorage &storage, Movie film, char command) {
+    std::string new_name;
+    switch (command) {
+        case '1':
+            // Выбор коллекции или создание новой
+            std::cin >> new_name;
+            storage.new_databases(new_name);
+            break;
+
+        case '2': // ADD
+            std::cout << "Enter name, genre, date (YYYY-MM-DD), rating: ";
+            std::cin >> film.name >> film.genre >> film.watch_date >> film.rating;
+            storage.addMovie(film.name, film.genre, film.watch_date, film.rating);
+            break;
+        
+        case '3': // GET
+            std::cout << "Enter ID: ";
+            std::cin >> film.id;
+            storage.getMovie(film.id);
+            break;
+
+        case '4':
+            std::cout << "Enter ID, name, genre, date (YYYY-MM-DD), rating: ";
+            std::cin >> film.id >> film.name >> film.genre >> film.watch_date >> film.rating;
+            storage.updateMovie(film.id, film.name, film.genre, film.watch_date, film.rating);
+            break;
+
+        case '5':
+            std::cout << "Enter ID: ";
+            std::cin >> film.id;
+            storage.deleteMovie(film.id);
+            break;
+
+        case '6':
+            // показать все фильмы
+            break;
+
+        default:
+            break;
+    }
+}
+
+void menu() {
+    std::cout << "\n1. Выбор коллекции или создание новой\n"
+    "2. Добавить фильм\n"
+    "3. Найти фильм по id\n"
+    "4. Редактировать данные фильма\n"
+    "5. Удалить фильм\n"
+    "6. Показать все фильмы\n" 
+    "7. Выйти\n"
+    "\n"
+    "Выберите действие: ";
 }

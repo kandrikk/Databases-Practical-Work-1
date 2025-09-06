@@ -1,7 +1,8 @@
 GXX = g++
-CXXFLAGS = -Iinclude -Wall -Wextra -Werror
-SRC = src/main.cpp src/movies.cpp src/database_movies.cpp
-INCLUDE = include/database_movies.h include/movies.h
+OTHER_LIB = -I/opt/homebrew/opt/libpqxx/include -L/opt/homebrew/opt/libpqxx/lib -L/opt/homebrew/opt/libpq/lib 
+CXXFLAGS = -std=c++17 $(OTHER_LIB) -Iinclude -Wall -Wextra -Werror
+SRC = src/*
+INCLUDE = -lpqxx -lpq
 TARGET = build/main
 
 all:
