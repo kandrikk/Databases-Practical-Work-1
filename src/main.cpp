@@ -1,8 +1,7 @@
 #include "movie_storage.h"
 #include "movies.h"
 
-void interface(MovieStorage& storage, Movie film, char command);
-void menu();
+void interface(MovieStorage& storage, Movie &film, char command);
 
 int main() {
     MovieStorage storage("movies", "movie_db", "kandik", "kandik", "127.0.0.1", "5432");
@@ -10,75 +9,66 @@ int main() {
     char command;
 
     while (true) {
-        menu();
-        command = getchar();
+        storage.menu();
+        std::cin >> command;
 
         if (command == '7') {
             break;
         }
         
-        interface(storage, film, command);
-
-        while (getchar() != '\n');
+        if (command >= '1' && command <= '6') {
+            interface(storage, film, command);
+        } else {
+            std::cout << "\033[31;1m";
+            std::cout << "\nНеверный ввод команды.\n";
+            std::cout << "\033[0m";
+        }
     }
 
     return 0;
 }
 
-void interface(MovieStorage &storage, Movie film, char command) {
+void interface(MovieStorage &storage, Movie &film, char command) {
     std::string new_table_name;
+
     switch (command) {
-        case '1': //yes
-            // Выбор коллекции или создание новой
-            std::cout << "Введите имя хранилища: ";
+        case '1':
+            std::cout << "Введите имя таблицы: ";
             std::cin >> new_table_name;
-            storage.new_collection(new_table_name);
+            storage.tableSwitching(new_table_name);
             break;
 
-        case '2': // yes
+        case '2':
             std::cout << "Формат ввода: \"Название фильма\" \"Жанр\" \"Дата просмотра\"(YYYY-MM-DD) Рейтинг(0-10)\n";
             std::cout << "Введите фильм для добавление в хранилище: ";
             std::cin >> film.name >> film.genre >> film.watch_date >> film.rating;
             storage.addMovie(film.name, film.genre, film.watch_date, film.rating);
             break;
         
-        case '3': // yes
+        case '3':
             std::cout << "Введите id фильма: ";
             std::cin >> film.id;
             storage.getMovie(film.id);
             break;
 
-        case '4': //yes
-            std::cout << "Формат ввода: \"Название фильма\" \"Жанр\" \"Дата просмотра\"(YYYY-MM-DD) Рейтинг(0-10)\n";
+        case '4':
+            std::cout << "Формат ввода: ID \"Название фильма\" Жанр Дата_просмотра(YYYY-MM-DD) Рейтинг(0-10)\n";
             std::cout << "Введите данные для обновления данных в хранилище: ";
             std::cin >> film.id >> film.name >> film.genre >> film.watch_date >> film.rating;
             storage.updateMovie(film.id, film.name, film.genre, film.watch_date, film.rating);
             break;
 
-        case '5': //yes
-            std::cout << "Enter ID: ";
+        case '5':
+            std::cout << "Введите ID для удаления: ";
             std::cin >> film.id;
             storage.deleteMovie(film.id);
             break;
 
-        case '6': // yes
-            // показать все фильмы
+        case '6':
             storage.getAllMovies();
             break;
 
         default:
             break;
     }
-}
-
-void menu() {
-    std::cout << "\n1. Выбор коллекции или создание новой\n"
-    "2. Добавить фильм\n"
-    "3. Найти фильм по id\n"
-    "4. Редактировать данные фильма\n"
-    "5. Удалить фильм\n"
-    "6. Показать все фильмы\n" 
-    "7. Выйти\n"
-    "\n"
-    "Выберите действие: ";
 }

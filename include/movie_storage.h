@@ -9,7 +9,7 @@ public:
         const std::string& user, const std::string& password, const std::string& host, 
         const std::string& port);
 
-    void new_collection(const std::string& table_name);
+    void tableSwitching(const std::string& table_name);
 
     void addMovie(const std::string& name, const std::string& genre, 
         const std::string& watch_date, int rating);
@@ -23,11 +23,14 @@ public:
 
     void deleteMovie(int id);
 
+    void menu();
+
 private:
     void connect();
-    int count_movies_in_databases();
     void createTable();
     bool tableExists(const std::string& tableName);
+    bool idExists(int id);
+    bool isValidDate(const std::string& date);
     std::unique_ptr<pqxx::connection> conn;
 
     std::string _table_name; 
