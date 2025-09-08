@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include "movies.h"
 
 class MovieStorage {
 public:
@@ -25,7 +26,10 @@ public:
 
     void menu();
 
+    void interface();
+
 private:
+    void executeCommand(char command);
     void connect();
     void createTable();
     bool tableExists(const std::string& tableName);

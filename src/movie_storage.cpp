@@ -147,7 +147,9 @@ void MovieStorage::getAllMovies() {
     pqxx::result result = txn.exec(query);
     
     if (result.empty()) {
-        std::cout << "В хранилище нет фильмов" << std::endl;
+        std::cout << "\033[31;1m";
+        std::cout << "\nВ хранилище нет фильмов" << std::endl;
+        std::cout << "\033[0m";
     } else {
         std::cout << "\u001b[32;1m";
         std::cout << "Список всех фильмов:" << std::endl;
@@ -181,7 +183,74 @@ void MovieStorage::menu() {
     "Выберите действие: ";
 }
 
+void MovieStorage::interface() {
+    char command;
+
+    while (true) {
+        this->menu();
+        std::cin >> command;
+
+        if (command == '7') {
+            break;
+        }
+        
+        if (command >= '1' && command <= '6') {
+            this->executeCommand(command);
+        } else {
+            std::cout << "\033[31;1m";
+            std::cout << "\nНеверный ввод команды.\n";
+            std::cout << "\033[0m";
+        }
+    }
+}
+
 // ВСПОМОГАТЕЛЬНЫЕ
+
+void MovieStorage::executeCommand(char command) {
+    std::string new_table_name;
+    Movie film;
+
+    switch (command) {
+        case '1':
+            std::cout << "Введите имя таблицы: ";
+            std::cin >> new_table_name;
+            this->tableSwitching(new_table_name);
+            break;
+
+        case '2':
+            std::cout << "Формат ввода: \"Название фильма\" \"Жанр\" \"Дата просмотра\"(YYYY-MM-DD) Рейтинг(0-10)\n";
+            std::cout << "Введите фильм для добавление в хранилище: ";
+            std::cin >> film.name >> film.genre >> film.watch_date >> film.rating;
+            this->addMovie(film.name, film.genre, film.watch_date, film.rating);
+            break;
+        
+        case '3':
+            std::cout << "Введите id фильма: ";
+            std::cin >> film.id;
+            this->getMovie(film.id);
+            break;
+
+        case '4':
+            std::cout << "Формат ввода: ID \"Название фильма\" Жанр Дата_просмотра(YYYY-MM-DD) Рейтинг(0-10)\n";
+            std::cout << "Введите данные для обновления данных в хранилище: ";
+            std::cin >> film.id >> film.name >> film.genre >> film.watch_date >> film.rating;
+            this->updateMovie(film.id, film.name, film.genre, film.watch_date, film.rating);
+            break;
+
+        case '5':
+            std::cout << "Введите ID для удаления: ";
+            std::cin >> film.id;
+            this->deleteMovie(film.id);
+            break;
+
+        case '6':
+            this->getAllMovies();
+            break;
+
+        default:
+            break;
+    }
+}
 
 void MovieStorage::connect() {
     std::string conn_str = "dbname=" + _db_name + " user=" + _user
@@ -255,14 +324,6 @@ bool MovieStorage::isValidDate(const std::string& date) {
     if (year < 1900 || year > 2100) return false;
     if (month < 1 || month > 12) return false;
     if (day < 1 || day > 31) return false;
-    
-    if ((month == 4 || month == 6 || month == 9 || month == 11) && day > 30) return false;
-    
-    if (month == 2) {
-        bool isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-        if (isLeapYear && day > 29) return false;
-        if (!isLeapYear && day > 28) return false;
-    }
     
     return true;
 }
