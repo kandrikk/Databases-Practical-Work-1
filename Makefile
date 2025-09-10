@@ -1,6 +1,6 @@
 GXX = g++
 CXXFLAGS = -Iinclude -Wall -Wextra -Werror
-SRC = src/main.cpp src/MovieStorage.cpp
+SRC = src/main.cpp src/MovieStorage.cpp src/Movie.cpp
 TARGET = build/main
 
 all:

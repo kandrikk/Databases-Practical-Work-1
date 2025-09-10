@@ -1,7 +1,9 @@
 #include "MovieStorage.h"
 
-MovieStorage::MovieStorage() {
-    connect(_storage);
+MovieStorage::MovieStorage(std::string storage) {
+    if (connect(storage)) {
+        this->loadMovies();
+    }
 }
 
 void MovieStorage::interface() {
@@ -28,23 +30,165 @@ void MovieStorage::interface() {
 }
 
 void MovieStorage::storageSwitching(std::string& new_storage) {
-    connect(new_storage);
+    if (connect(new_storage)) {
+        this->loadMovies();
+    }
 }
 
 void MovieStorage::addMovie() {
-    std::string line;
-    std::getline(std::cin, line);
+    Movie mov;
+    if (!mov.load()) {
+        redMessage("\nНеверный формат ввода.\n");
+        return;
+    }
 
-    //Movie mov = linkMovie(line);
+    if (!idfree(mov.id)) {
+        redMessage("\nID занято.\n");
+        return;
+    }
+
+    movies.insert(std::make_pair(mov.id, mov));
+
+    save();
+}
+
+void MovieStorage::getMovie() {
+    int i;
+    std::cout << "ID: ";
+    std::cin >> i;
+
+    if (idfree(i)) {
+        redMessage("\nФильма с данным ID нет в базе.\n");
+        return;
+    }
+
+    std::string mov = "\nНазвание: " + movies[i].name + "\n"
+                    + "Жанр: " + movies[i].genre + "\n"
+                    + "Дата просмотра: " + movies[i].watch_date + "\n"
+                    + "Оценка: " + std::to_string(movies[i].rating) + "\n";
+
+    greenMessage(mov);
+}
+
+void MovieStorage::getMovie(int i) {
+    std::string mov = "\nID: " + std::to_string(movies[i].id) + "\n" 
+                    + "Название: " + movies[i].name + "\n"
+                    + "Жанр: " + movies[i].genre + "\n"
+                    + "Дата просмотра: " + movies[i].watch_date + "\n"
+                    + "Оценка: " + std::to_string(movies[i].rating) + "\n";
+
+    greenMessage(mov);
+}
+
+void MovieStorage::updateMovie() {
+    Movie mov;
+    int i;
+    std::cout << "ID: ";
+    std::cin >> i;
+
+    if (idfree(i)) {
+        redMessage("\nФильма с данным ID нет в базе.\n");
+        return;
+    }
+
+    if (!mov.load(i)) {
+        redMessage("\nНеверный формат ввода.\n");
+        return;
+    }
+
+    movies[i] = mov;
+
+    save();
+}
+
+void MovieStorage::deleteMovie() {
+    int i;
+    std::cout << "ID: ";
+    std::cin >> i;
+
+    if (idfree(i)) {
+        redMessage("\nФильма с данным ID нет в базе.\n");
+        return;
+    }
+
+    movies.erase(i);
+    
+    save();
+
+    greenMessage("\nФильм удален\n");
+}
+
+void MovieStorage::getAllMovies() {
+    if (movies.empty()) {
+        redMessage("\nВ хранилище нет фильмов.\n");
+    }
+
+    std::vector<std::pair<int, Movie>> sortedMovies(movies.begin(), movies.end());
+
+    for (auto pair : sortedMovies) {
+        getMovie(pair.first);
+    }
+}
+
+void MovieStorage::save() {
+    std::string filename = _storage;
+    std::ofstream file(filename);
+
+    if (!file.is_open()) {
+        redMessage("Не удалось открыть файл");
+        return;
+    }
+
+    for (auto it : movies) {
+        std::string line = ";" + it.second.name + ";" 
+        + it.second.genre + ";" + it.second.watch_date + ";" 
+        + std::to_string(it.second.rating);
+
+        file << it.first << line << "\n";
+    }
+}
+
+void MovieStorage::loadMovies() {
+    movies.clear();
+    
+    std::ifstream file(_storage);
+    if (!file.is_open()) {
+        std::string message = "\nНе удалось открыть хранилище " + _storage + " для чтения.\n";
+        redMessage(message);
+        return;
+    }
+    
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        
+        Movie movie;
+        if (movie.parseFromString(line)) {
+            movies[movie.id] = movie;
+        } else {
+            std::string message = "\nОшибка при чтении строки: " + line + "\n";
+            redMessage(message);
+        }
+    }
+    
+    file.close();
 }
 
 // hellpers
+
+bool MovieStorage::idfree(int i) {
+    if (movies.find(i) != movies.end()) {
+        return false;
+    }
+
+    return true;
+}
 
 void MovieStorage::menu() {
     std::string message = "\nПодключенно к хранилищу " + _storage.substr(5) + ".";
     greenMessage(message);
 
-    std::cout << "\n1. Выбор или создание нового хранилищаа\n"
+    std::cout << "\n1. Выбор или создание нового хранилища\n"
     "2. Добавить фильм\n"
     "3. Найти фильм по id\n"
     "4. Редактировать данные фильма\n"
@@ -57,7 +201,7 @@ void MovieStorage::menu() {
 
 void MovieStorage::executeCommand(char command) {
     std::string new_storage;
-    Movie film;
+
 
     switch (command) {
         case '1':
@@ -67,60 +211,53 @@ void MovieStorage::executeCommand(char command) {
             break;
 
         case '2':
-            std::cout << "Формат ввода: ID \"Название фильма\" \"Жанр\" \"Дата просмотра\"(YYYY-MM-DD) Рейтинг(0-10)\n";
-            std::cout << "Введите фильм для добавление в хранилище: ";
             this->addMovie();
             break;
         
-        case '3':
-            std::cout << "Введите id фильма: ";
-            
-            //this->getMovie(film.id);
+        case '3':            
+            this->getMovie();
             break;
 
         case '4':
-            std::cout << "Формат ввода: ID \"Название фильма\" Жанр Дата_просмотра(YYYY-MM-DD) Рейтинг(0-10)\n";
-            std::cout << "Введите данные для обновления данных в хранилище: ";
-
-            //this->updateMovie(film.id, film.name, film.genre, film.watch_date, film.rating);
+            this->updateMovie();
             break;
 
         case '5':
-            std::cout << "Введите ID для удаления: ";
-
-            //this->deleteMovie(film.id);
+            this->deleteMovie();
             break;
 
         case '6':
-            //this->getAllMovies();
-            break;
+            this->getAllMovies();
+            break; 
 
         default:
             break;
     }
 }
 
-void MovieStorage::connect(std::string& file_name) {
-    if (!isFileNameValid(file_name)) {
-        std::string message = "\n" + file_name + " не соответствует формату \"namefile.txt\".\n";
+bool MovieStorage::connect(std::string& filename) {
+    if (!isFileNameValid(filename)) {
+        std::string message = "\n" + filename + " не соответствует формату \"namefile.txt\".\n";
         redMessage(message);
-        return;
+        return false;
     }
 
-    file_name = "data/" + file_name;
+    filename = "data/" + filename;
 
-    if (!fileExist(file_name)) {
-        createFile(file_name);
+    if (!fileExist(filename)) {
+        createFile(filename);
     }
 
-    std::fstream file(file_name);
+    std::fstream file(filename);
 
-    if (file.is_open()) {
-        _storage = file_name;
-    } else {
-        std::string message = "\nНеудалось открыть хранилище " + file_name.substr(5) + ".\n";
+    if (!file.is_open()) {
+        std::string message = "\nНеудалось открыть хранилище " + filename.substr(5) + ".\n";
         redMessage(message);
+        return false;
     }
+
+    _storage = filename;
+    return true;
 }
 
 bool isFileNameValid(std::string& file_name) {
@@ -146,15 +283,14 @@ bool createFile(std::string& file_name) {
     return true;
 }
 
-void redMessage(std::string& message) {
+void redMessage(std::string message) {
     std::cout << "\033[31;1m";
     std::cout << message;
     std::cout << "\033[0m";
 }
 
-void greenMessage(std::string& message) {
+void greenMessage(std::string message) {
     std::cout << "\u001b[32;1m";
     std::cout << message;
     std::cout << "\033[0m";
 }
-

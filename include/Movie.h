@@ -1,21 +1,20 @@
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <vector>
 
 class Movie {
-private:
+public:
+    int id;
     std::string name;
     std::string genre;
     std::string watch_date;
     int rating;
 
-public:
-    bool linkMovie(std::string& line);
-
     Movie() = default;
-
-    linkMovie(std::string& line);
-
+    bool load();
+    bool load(int si);
     bool checkValid();
+    bool parseFromString(std::string& line);
 
 };
