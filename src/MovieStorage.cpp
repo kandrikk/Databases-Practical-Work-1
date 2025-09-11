@@ -29,7 +29,12 @@ void MovieStorage::interface() {
     }
 }
 
-void MovieStorage::storageSwitching(std::string& new_storage) {
+void MovieStorage::storageSwitching() {
+    std::string new_storage;
+
+    std::cout << "Введите имя хранилища: ";
+    std::getline(std::cin, new_storage);
+
     if (connect(new_storage)) {
         this->loadMovies();
     }
@@ -54,8 +59,16 @@ void MovieStorage::addMovie() {
 
 void MovieStorage::getMovie() {
     int i;
+    std::string stri;
     std::cout << "ID: ";
-    std::cin >> i;
+    std::getline(std::cin, stri);
+
+    if (stri.length() == 1) {
+        i = std::stoi(stri);
+    } else {
+        redMessage("\nНеккоректнный ввод.\n");
+        return;
+    }
 
     if (idfree(i)) {
         redMessage("\nФильма с данным ID нет в базе.\n");
@@ -82,9 +95,18 @@ void MovieStorage::getMovie(int i) {
 
 void MovieStorage::updateMovie() {
     Movie mov;
+
     int i;
+    std::string stri;
     std::cout << "ID: ";
-    std::cin >> i;
+    std::getline(std::cin, stri);
+
+    if (stri.length() == 1) {
+        i = std::stoi(stri);
+    } else {
+        redMessage("\nНеккоректнный ввод.\n");
+        return;
+    }
 
     if (idfree(i)) {
         redMessage("\nФильма с данным ID нет в базе.\n");
@@ -103,9 +125,17 @@ void MovieStorage::updateMovie() {
 
 void MovieStorage::deleteMovie() {
     int i;
+    std::string stri;
     std::cout << "ID: ";
-    std::cin >> i;
+    std::getline(std::cin, stri);
 
+    if (stri.length() == 1) {
+        i = std::stoi(stri);
+    } else {
+        redMessage("\nНеккоректнный ввод.\n");
+        return;
+    }
+    
     if (idfree(i)) {
         redMessage("\nФильма с данным ID нет в базе.\n");
         return;
@@ -160,7 +190,7 @@ void MovieStorage::loadMovies() {
     
     std::string line;
     while (std::getline(file, line)) {
-        if (line.empty()) continue;
+        if (line.empty()) break;
         
         Movie movie;
         if (movie.parseFromString(line)) {
@@ -200,14 +230,9 @@ void MovieStorage::menu() {
 }
 
 void MovieStorage::executeCommand(char command) {
-    std::string new_storage;
-
-
     switch (command) {
         case '1':
-            std::cout << "Введите имя таблицы: ";
-            std::cin >> new_storage;
-            this->storageSwitching(new_storage);
+            this->storageSwitching();
             break;
 
         case '2':
@@ -245,7 +270,22 @@ bool MovieStorage::connect(std::string& filename) {
     filename = "data/" + filename;
 
     if (!fileExist(filename)) {
-        createFile(filename);
+        std::string assert;
+
+        std::cout << "Хранилища " << filename.substr(5) << " несуществует.\nСоздать?\n[yes/no]: ";
+        std::cin.ignore();
+        std::getline(std::cin, assert);
+
+        if (assert == "yes") {
+            createFile(filename);
+            std::string message = "\nХранилище " + filename.substr(5) + " созданно.\n";
+            greenMessage(message);
+        } else if (assert == "no") {
+            return false;
+        } else {
+            redMessage("\nНекоректнный ввод.\n");
+            return false;
+        }
     }
 
     std::fstream file(filename);

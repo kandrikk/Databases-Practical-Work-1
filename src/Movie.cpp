@@ -30,8 +30,6 @@ bool Movie::load() {
 }
 
 bool Movie::load(int si) {
-    while (std::getchar() != '\n');
-
     try {
         std::string i;
 

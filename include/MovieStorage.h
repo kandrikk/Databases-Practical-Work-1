@@ -28,7 +28,7 @@ public:
     MovieStorage(std::string storage);
 
     void interface();
-    void storageSwitching(std::string& new_storage);
+    void storageSwitching();
     void addMovie();
     void getMovie();
     void getMovie(int i);
