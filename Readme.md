@@ -1,4 +1,4 @@
-1. Выбор или создание новой таблицы.
+1. Выбор или создание нового хранилища
 2. Добавить фильм
 3. Найти фильм по id
 4. Редактировать данные фильма
@@ -7,7 +7,7 @@
 7. Выйти
 
 Алгоритмическая сложность:
-addMovie - O(1).
-getMovie - O(log n).
-updateMovie - O(log n).
-deleteMovie - O(log n).
+addMovie - O(n)
+getMovie - O(log n)
+updateMovie - O(n)
+deleteMovie - O(n)
