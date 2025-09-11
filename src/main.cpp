@@ -1,8 +1,7 @@
-#include "movie_storage.h"
+#include "MovieStorage.h"
 
 int main() {
-    MovieStorage storage("movies", "movie_db", "kandik", "kandik", "127.0.0.1", "5432");
-
+    MovieStorage storage("storage.txt");
     storage.interface();
 
     return 0;
