@@ -2,7 +2,7 @@
 
 MovieStorage::MovieStorage(std::string storage) {
     if (connect(storage)) {
-        this->loadMovies();
+        loadMovies();
     }
 }
 
@@ -11,7 +11,7 @@ void MovieStorage::interface() {
     char command;
 
     while (true) {
-        this->menu();
+        menu();
         std::getline(std::cin, line);
 
         if (line.length() == 1 && line[0] >= '1' && line[0] <= '7') {
@@ -21,7 +21,7 @@ void MovieStorage::interface() {
                 break;
             }
         
-            this->executeCommand(command);
+            executeCommand(command);
         } else {
             std::string message = "\nНеверный ввод команды.\n";
             redMessage(message);
@@ -36,14 +36,14 @@ void MovieStorage::storageSwitching() {
     std::getline(std::cin, new_storage);
 
     if (connect(new_storage)) {
-        this->loadMovies();
+        loadMovies();
     }
 }
 
 void MovieStorage::addMovie() {
     Movie mov;
     if (!mov.load()) {
-        redMessage("\nНеверный формат ввода.\n");
+        redMessage("\nНеккоректнный ввод.\n");
         return;
     }
 
@@ -124,28 +124,26 @@ void MovieStorage::updateMovie() {
 }
 
 void MovieStorage::deleteMovie() {
-    int i;
-    std::string stri;
-    std::cout << "ID: ";
-    std::getline(std::cin, stri);
-
-    if (stri.length() == 1) {
+    try {
+        int i;
+        std::string stri;
+        std::cout << "ID: ";
+        std::getline(std::cin, stri);
         i = std::stoi(stri);
-    } else {
-        redMessage("\nНеккоректнный ввод.\n");
-        return;
-    }
-    
-    if (idfree(i)) {
-        redMessage("\nФильма с данным ID нет в базе.\n");
-        return;
-    }
+        
+        if (idfree(i)) {
+            redMessage("\nФильма с данным ID нет в базе.\n");
+            return;
+        }
 
-    movies.erase(i);
-    
-    save();
+        movies.erase(i);
+        
+        save();
 
-    greenMessage("\nФильм удален\n");
+        greenMessage("\nФильм удален\n");
+    } catch(std::exception) {
+        redMessage("\nНекоректнный ввод.\n");
+    }    
 }
 
 void MovieStorage::getAllMovies() {
@@ -169,13 +167,19 @@ void MovieStorage::save() {
         return;
     }
 
+    json j;
     for (auto it : movies) {
-        std::string line = ";" + it.second.name + ";" 
-        + it.second.genre + ";" + it.second.watch_date + ";" 
-        + std::to_string(it.second.rating);
+        json movJson;
+        movJson["id"] = it.first;
+        movJson["name"] = it.second.name;
+        movJson["genre"] = it.second.genre;
+        movJson["watch date"] = it.second.watch_date;
+        movJson["rating"] = it.second.rating;
 
-        file << it.first << line << "\n";
+        j.push_back(movJson);
     }
+
+    file << j.dump(4);
 }
 
 void MovieStorage::loadMovies() {
@@ -188,20 +192,24 @@ void MovieStorage::loadMovies() {
         return;
     }
     
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.empty()) break;
-        
-        Movie movie;
-        if (movie.parseFromString(line)) {
-            movies[movie.id] = movie;
-        } else {
-            std::string message = "\nОшибка при чтении строки: " + line + "\n";
-            redMessage(message);
+    try {
+        json j;
+        file >> j;
+
+        for (auto elem : j) {
+            Movie mov;
+            mov.id = elem["id"];
+            mov.name = elem["name"];
+            mov.genre = elem["genre"];
+            mov.watch_date = elem["watch date"];
+            mov.rating = elem["rating"];
+
+            movies[mov.id] = mov;
         }
+
+    } catch(std::exception) {
+        redMessage("\nОшибка при чтение хранилища.\n");
     }
-    
-    file.close();
 }
 
 // hellpers
@@ -232,27 +240,27 @@ void MovieStorage::menu() {
 void MovieStorage::executeCommand(char command) {
     switch (command) {
         case '1':
-            this->storageSwitching();
+            storageSwitching();
             break;
 
         case '2':
-            this->addMovie();
+            addMovie();
             break;
         
         case '3':            
-            this->getMovie();
+            getMovie();
             break;
 
         case '4':
-            this->updateMovie();
+            updateMovie();
             break;
 
         case '5':
-            this->deleteMovie();
+            deleteMovie();
             break;
 
         case '6':
-            this->getAllMovies();
+            getAllMovies();
             break; 
 
         default:
@@ -262,7 +270,7 @@ void MovieStorage::executeCommand(char command) {
 
 bool MovieStorage::connect(std::string& filename) {
     if (!isFileNameValid(filename)) {
-        std::string message = "\n" + filename + " не соответствует формату \"namefile.txt\".\n";
+        std::string message = "\n" + filename + " не соответствует формату \"filename.json\".\n";
         redMessage(message);
         return false;
     }
@@ -272,15 +280,22 @@ bool MovieStorage::connect(std::string& filename) {
     if (!fileExist(filename)) {
         std::string assert;
 
-        std::cout << "Хранилища " << filename.substr(5) << " несуществует.\nСоздать?\n[yes/no]: ";
-        std::cin.ignore();
+        std::cout << "Хранилища " << filename.substr(5) << " несуществует.\n" 
+        << "Создать?\n"
+        << "[y/n]: ";
+        
         std::getline(std::cin, assert);
 
-        if (assert == "yes") {
-            createFile(filename);
+        if (assert.length() != 1) {
+            redMessage("\nНекоректнный ввод.\n");
+            return false;
+        }
+
+        if (assert[0] == 'y') {
+            if (!createFile(filename)) return false;
             std::string message = "\nХранилище " + filename.substr(5) + " созданно.\n";
             greenMessage(message);
-        } else if (assert == "no") {
+        } else if (assert[0] == 'n') {
             return false;
         } else {
             redMessage("\nНекоректнный ввод.\n");
@@ -300,37 +315,26 @@ bool MovieStorage::connect(std::string& filename) {
     return true;
 }
 
-bool isFileNameValid(std::string& file_name) {
-    if (file_name.length() < 5) return false;
-    if (file_name.substr(file_name.length() - 4) != ".txt") return false;
+bool MovieStorage::isFileNameValid(std::string& file_name) {
+    if (file_name.length() < 6) return false;
+    if (file_name.substr(file_name.length() - 5) != ".json") return false;
 
     return true;
 }
 
-bool fileExist(std::string& file_name) {
+bool MovieStorage::fileExist(std::string& file_name) {
     std::ifstream file(file_name);
     return file.good();
 }
 
-bool createFile(std::string& file_name) {
+bool MovieStorage::createFile(std::string& file_name) {
     std::ofstream file(file_name);
 
     if (!file) {
         return false;
     }
 
-    file.close();
+    file << "[]";
+
     return true;
-}
-
-void redMessage(std::string message) {
-    std::cout << "\033[31;1m";
-    std::cout << message;
-    std::cout << "\033[0m";
-}
-
-void greenMessage(std::string message) {
-    std::cout << "\u001b[32;1m";
-    std::cout << message;
-    std::cout << "\033[0m";
 }

@@ -1,6 +1,6 @@
 GXX = g++
-CXXFLAGS = -Iinclude -Wall -Wextra -Werror
-SRC = src/main.cpp src/MovieStorage.cpp src/Movie.cpp
+CXXFLAGS = -Iinclude -I/opt/homebrew/include -Wall -Wextra -Werror
+SRC = src/main.cpp src/MovieStorage.cpp src/Movie.cpp src/helpers.cpp
 TARGET = build/main
 
 all:

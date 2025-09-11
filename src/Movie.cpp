@@ -18,11 +18,9 @@ bool Movie::load() {
         std::getline(std::cin, rstr);
         this->rating = std::stoi(rstr);
 
-        checkValid();
+        if (!this->checkValid()) return false;
+
     } catch(std::exception) {
-        std::cout << "\033[31;1m";
-        std::cout << "\nНекоректнный ввод\n";
-        std::cout << "\033[0m";
         return false;
     }
 
@@ -46,11 +44,9 @@ bool Movie::load(int si) {
         std::getline(std::cin, i);
         this->rating = std::stoi(i);
 
-        checkValid();
+        if (!this->checkValid()) return false;
+        
     } catch(std::exception) {
-        std::cout << "\033[31;1m";
-        std::cout << "\nНекоректнный ввод\n";
-        std::cout << "\033[0m";
         return false;
     }
 
@@ -79,32 +75,7 @@ bool Movie::checkValid() {
     if (mounth == 9 && day > 30) return false;
     if (mounth == 11 && day > 30) return false;
 
+    if (this->rating < 0 || this->rating > 10) return false;
+
     return true;
 };
-
-
-bool Movie::parseFromString(std::string& line) {
-    std::vector<std::string> parts;
-    std::stringstream ss(line);
-    std::string part;
-
-    while (std::getline(ss, part, ';')) {
-        parts.push_back(part);
-    }
-    
-    if (parts.size() != 5) {
-        return false;
-    }
-    
-    try {
-        id = std::stoi(parts[0]);
-        name = parts[1];
-        genre = parts[2];
-        watch_date = parts[3];
-        rating = std::stoi(parts[4]);
-    } catch (std::exception) {
-        return false;
-    }
-    
-    return true;
-}

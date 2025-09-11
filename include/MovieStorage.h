@@ -3,25 +3,25 @@
 #include <string>
 #include <map>
 #include "Movie.h"
-//#include <nlohmann/json.hpp>
+#include "helpers.h"
+#include <nlohmann/json.hpp>
 
-//using json = nlohmann::json;
-
-bool isFileNameValid(std::string& file_name);
-void redMessage(std::string message);
-void greenMessage(std::string message);
-bool fileExist(std::string& file_name);
-bool createFile(std::string& file_name);
+using json = nlohmann::json;
 
 class MovieStorage {
 private:
     std::string _storage;
     std::map<int, Movie> movies;
 
+    void menu();
+    void executeCommand(char command);
     bool connect(std::string& file_name);
     void loadMovies();
-    void executeCommand(char command);
-    void menu();
+    void save();
+    
+    bool isFileNameValid(std::string& file_name);
+    bool fileExist(std::string& file_name);
+    bool createFile(std::string& file_name);
     bool idfree(int i);
     
 public:
@@ -35,6 +35,4 @@ public:
     void updateMovie();
     void deleteMovie();
     void getAllMovies();
-
-    void save();
 };
