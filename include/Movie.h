@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include "helpers.h"
 
 class Movie {
 public:
@@ -15,6 +16,4 @@ public:
     bool load();
     bool load(int si);
     bool checkValid();
-    bool parseFromString(std::string& line);
-
 };
